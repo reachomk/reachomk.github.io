@@ -32,29 +32,30 @@ function pushLocal(row) {
   localStorage.setItem(localKey, JSON.stringify(localBackup));
 }
 async function post(action, payload) {
-  const body = JSON.stringify({ token: TOKEN || undefined, action, ...payload });
+  // Make a "simple" request: application/x-www-form-urlencoded, no custom headers.
+  const bodyObj = { token: TOKEN || undefined, action, ...payload };
+  const form = new URLSearchParams();
+  form.set('payload', JSON.stringify(bodyObj));
+
   try {
     const res = await fetch(SHEETS_WEBAPP_URL, {
       method: 'POST',
-      mode: 'cors',
-      // IMPORTANT: no custom headers, so the request is "simple" (no preflight)
-      body
+      // no headers → browser sets application/x-www-form-urlencoded automatically
+      body: form
     });
+    // When posting as form, Apps Script still returns JSON; read it normally.
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (e) {
-    // For submit/heartbeat we can fall back to no-cors (fire-and-forget).
+    // For submit/heartbeat we can fall back to no-cors (fire-and-forget)
     if (action === 'submit' || action === 'heartbeat') {
-      await fetch(SHEETS_WEBAPP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body // still text/plain by default
-      });
+      await fetch(SHEETS_WEBAPP_URL, { method:'POST', body: form, mode: 'no-cors' });
       return { ok: true, offline: true };
     }
     throw e;
   }
 }
+
 
 function requireUserId() {
   userId = (workerEl && workerEl.value.trim()) || userId || '';
