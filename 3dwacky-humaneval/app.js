@@ -1,13 +1,12 @@
 /************ CONFIG ************/
 const SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyP3jSW8aeXnG2zxFKxKlhdIgTIZLBOIup0ZWusXmq3bfLqKsXU5qOA54uorg75439i/exec';
-const TOKEN = ''; // must match Apps Script TOKEN (or '' to disable)
-const HEARTBEAT_MS = 25000;       // < TTL to keep the lock alive
+const TOKEN = '';
+const HEARTBEAT_MS = 25000;
 /********************************/
 
-// Elements
 const imgAEl    = document.getElementById('imgA');
 const imgBEl    = document.getElementById('imgB');
-const workerEl  = document.getElementById('workerId'); // optional personal ID; user_id is the shared group id
+const workerEl  = document.getElementById('workerId');
 const selectEl  = document.getElementById('pair-category');
 const submitBtn = document.getElementById('submitBtn');
 const skipBtn   = document.getElementById('skipBtn');
@@ -17,20 +16,17 @@ const statusEl  = document.getElementById('status');
 
 const qs        = new URLSearchParams(location.search);
 const sessionId = crypto.randomUUID();
-let userId      = qs.get('uid') || '';   // shared among many people in your study
-if (workerEl) workerEl.value = userId;   // prefill if provided
+let userId      = qs.get('uid') || '';
+if (workerEl) workerEl.value = userId;
 
-// Local backup
 const localKey   = 'annotations_local_backup_v1';
 const localBackup= JSON.parse(localStorage.getItem(localKey) || '[]');
 
-// State
-let current = null;  // { pair_id, A_url, B_url }
+let current = null;
 let hbTimer = null;
 let t0 = 0;
 let completedCount = 0;
 
-// Utilities
 function pushLocal(row) {
   localBackup.push(row);
   localStorage.setItem(localKey, JSON.stringify(localBackup));
@@ -47,7 +43,6 @@ async function post(action, payload) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (e) {
-    // For submit/heartbeat, fallback to no-cors (fire-and-forget)
     if (action === 'submit' || action === 'heartbeat') {
       await fetch(SHEETS_WEBAPP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body });
       return { ok:true, offline:true };
@@ -64,7 +59,6 @@ function requireUserId() {
   return true;
 }
 
-// Heartbeat
 async function startHeartbeat() {
   stopHeartbeat();
   hbTimer = setInterval(() => {
@@ -73,24 +67,24 @@ async function startHeartbeat() {
     }
   }, HEARTBEAT_MS);
 }
-function stopHeartbeat() {
-  if (hbTimer) { clearInterval(hbTimer); hbTimer = null; }
-}
+function stopHeartbeat() { if (hbTimer) { clearInterval(hbTimer); hbTimer = null; } }
 
-// Claim next pair
 async function claimNext() {
   if (!requireUserId()) return;
   statusEl.textContent = 'Claiming next pair...';
   try {
     const resp = await post('claim', { user_id: userId, session_id: sessionId });
-    if (!resp?.ok) { statusEl.textContent = resp?.error || 'Claim failed'; return; }
+    if (!resp?.ok) {
+      statusEl.textContent = (resp && resp.error) ? `Server error: ${resp.error}` : 'Claim failed';
+      return;
+    }
     if (resp.done) {
       document.querySelector('main').innerHTML = `
         <h2>All done for now 🎉</h2>
         <p>No available pairs (all locked or completed).</p>`;
       return;
     }
-    current = resp.pair; // { pair_id, A_url, B_url }
+    current = resp.pair;
     imgAEl.src = current.A_url;
     imgBEl.src = current.B_url;
     selectEl.value = '';
@@ -100,15 +94,14 @@ async function claimNext() {
     startHeartbeat();
   } catch (e) {
     console.error(e);
-    statusEl.textContent = 'Claim failed (network).';
+    statusEl.textContent = 'Claim failed (endpoint not reachable). Check your SHEETS_WEBAPP_URL.';
   }
 }
 
-// Submit / Skip
 async function submitChoice(choice) {
   if (!current?.pair_id) return;
   const rt = Math.round(performance.now() - t0);
-  const worker_id = null; // keep separate if you want a per-person id
+  const worker_id = null;
 
   const row = {
     session_id: sessionId,
@@ -120,10 +113,8 @@ async function submitChoice(choice) {
     meta: { ua: navigator.userAgent }
   };
 
-  // Local backup first
   pushLocal({ created_at: new Date().toISOString(), ...row });
 
-  // Send to server (releases lock)
   try {
     await post('submit', row);
   } catch (e) {
@@ -137,7 +128,6 @@ async function submitChoice(choice) {
   claimNext();
 }
 
-// UI events
 submitBtn.addEventListener('click', () => {
   if (!requireUserId()) return;
   const val = selectEl.value;
@@ -162,11 +152,9 @@ exportBtn.addEventListener('click', () => {
   a.click(); URL.revokeObjectURL(url);
 });
 
-// Keyboard niceties (Enter = submit, K = skip)
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') submitBtn.click();
   if (e.key.toLowerCase() === 'k') skipBtn.click();
 });
 
-// Start
 claimNext();
