@@ -37,19 +37,25 @@ async function post(action, payload) {
     const res = await fetch(SHEETS_WEBAPP_URL, {
       method: 'POST',
       mode: 'cors',
-      headers: { 'Content-Type': 'application/json' },
+      // IMPORTANT: no custom headers, so the request is "simple" (no preflight)
       body
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (e) {
+    // For submit/heartbeat we can fall back to no-cors (fire-and-forget).
     if (action === 'submit' || action === 'heartbeat') {
-      await fetch(SHEETS_WEBAPP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body });
-      return { ok:true, offline:true };
+      await fetch(SHEETS_WEBAPP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body // still text/plain by default
+      });
+      return { ok: true, offline: true };
     }
     throw e;
   }
 }
+
 function requireUserId() {
   userId = (workerEl && workerEl.value.trim()) || userId || '';
   if (!userId) {
