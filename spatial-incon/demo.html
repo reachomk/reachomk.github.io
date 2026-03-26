@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="Interactive demo for spotting spatial inconsistencies in multiview scenes."
+  >
+  <title>Spatial Inconsistency Demo</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./css/index.css">
+</head>
+<body class="demo-page">
+  <div class="background-orb orb-one"></div>
+  <div class="background-orb orb-three"></div>
+
+  <main class="page-frame demo-frame">
+    <header class="panel demo-hero">
+      <div class="demo-hero-top">
+        <a class="back-link" href="./index.html">Back to project page</a>
+        <span class="demo-badge">4 curated examples from the paper</span>
+      </div>
+      <div class="demo-hero-copy">
+        <div>
+          <p class="eyebrow">Interactive Challenge</p>
+          <h1>Spot the spatial inconsistency</h1>
+        </div>
+        <p class="hero-lead">
+          Each pair shows the same static scene from different views, but one object in the
+          second image was replaced by the same object from another camera pose. Choose the
+          letter from the first image that marks the edited object.
+        </p>
+      </div>
+
+      <div class="feature-grid three-up compact-grid">
+        <article class="feature-card mini-card">
+          <p class="card-kicker">What to look for</p>
+          <p>Perspective, scale, tilt, shading, depth, and occlusion cues that do not match the camera motion.</p>
+        </article>
+        <article class="feature-card mini-card">
+          <p class="card-kicker">Scoring</p>
+          <p>You will answer four paper examples, reveal the ground truth, and see how top models responded.</p>
+        </article>
+        <article class="feature-card mini-card">
+          <p class="card-kicker">Keyboard shortcut</p>
+          <p>Press any letter key to select an answer and hit Enter to submit.</p>
+        </article>
+      </div>
+    </header>
+
+    <section class="demo-layout">
+      <div class="demo-stage panel">
+        <div class="demo-stage-head">
+          <div>
+            <p class="card-kicker">Current Pair</p>
+            <h2 id="example-title">Loading...</h2>
+          </div>
+          <div class="progress-pill" id="progress-pill">Example 1 of 4</div>
+        </div>
+
+        <div class="pair-showcase">
+          <figure class="image-card">
+            <div class="frame-label">Frame A</div>
+            <img id="image-a" src="" alt="Labeled frame A">
+          </figure>
+          <figure class="image-card">
+            <div class="frame-label">Frame B</div>
+            <img id="image-b" src="" alt="Edited frame B">
+          </figure>
+        </div>
+
+        <div class="answer-panel">
+          <p class="answer-title">Select the inconsistent object's letter</p>
+          <div class="letter-grid" id="letter-grid" aria-label="Letter choices"></div>
+
+          <div class="demo-actions">
+            <button class="action-button primary" id="submit-button" type="button">Check answer</button>
+            <button class="action-button secondary" id="reset-button" type="button">Clear choice</button>
+          </div>
+
+          <div class="feedback-box" id="feedback-box" aria-live="polite">
+            Choose a letter before revealing the answer.
+          </div>
+        </div>
+      </div>
+
+      <aside class="demo-sidebar">
+        <article class="panel sidebar-card">
+          <p class="card-kicker">Score</p>
+          <div class="score-stack">
+            <div class="score-bubble">
+              <span id="score-correct">0</span>
+              <small>correct</small>
+            </div>
+            <div class="score-bubble">
+              <span id="score-total">0</span>
+              <small>completed</small>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel sidebar-card">
+          <p class="card-kicker">Pair Metadata</p>
+          <h3 id="meta-scene">Scene</h3>
+          <div class="tag-row" id="meta-tags"></div>
+          <p id="meta-description" class="sidebar-copy"></p>
+        </article>
+
+        <article class="panel sidebar-card">
+          <p class="card-kicker">Paper Notes</p>
+          <ul class="plain-list compact-list">
+            <li>Humans reached 84.8% accuracy on the full benchmark.</li>
+            <li>The best tested model reached 34.2%.</li>
+            <li>Model failures vary a lot across depth, lighting, and object category.</li>
+          </ul>
+        </article>
+
+        <article class="panel sidebar-card reveal-card" id="reveal-card">
+          <p class="card-kicker">After You Answer</p>
+          <h3 id="reveal-answer">Answer: -</h3>
+          <p id="reveal-models" class="sidebar-copy">Model guesses will appear here.</p>
+        </article>
+      </aside>
+    </section>
+
+    <section class="panel outro-panel">
+      <p class="card-kicker">After the demo</p>
+      <h2>Why this matters</h2>
+      <p>
+        These examples are deliberately simple for humans but surprisingly difficult for today's
+        multimodal models. The full paper expands this into a large benchmark, artifact controls,
+        a real-world scaling study, and finetuning results that improve broader 3D perception.
+      </p>
+      <div class="hero-actions">
+        <a class="button-link button-link-solid" href="./index.html#results">See full results</a>
+        <a class="button-link button-link-ghost" href="./index.html#method">Review the method</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const EXAMPLES = [
+      {
+        id: "lounge-chair",
+        title: "Lounge chair example",
+        scene: "Lounge scene",
+        description:
+          "Medium depth, strong lighting, and an implausible pose. The correct answer is D; the showcased model guesses split across C / D / B.",
+        imageA: "./images/A_ai_044_010__obj51__B01_0093__A01_0052__C01_0051__mode-fit_bbox.jpg",
+        imageB: "./images/B_ai_044_010__obj51__B01_0093__A01_0052__C01_0051__mode-fit_bbox.jpg",
+        answer: "D",
+        tags: ["Object: Chair", "Depth: Medium", "Lighting: High", "Plausibility: Implausible"],
+        models: "GPT-5 (LR): C, Gemini 2.5 Pro (MR): D, Qwen3-VL 8B Instruct: B"
+      },
+      {
+        id: "bathroom-mirror",
+        title: "Bathroom mirror example",
+        scene: "Bathroom scene",
+        description:
+          "A mirror pasted into a physically implausible pose. The answer is B, while the showcased models respond A / J / J.",
+        imageA: "./images/buckets/wacky/A.jpg",
+        imageB: "./images/buckets/wacky/B.jpg",
+        answer: "B",
+        tags: ["Object: Mirror", "Depth: Medium", "Lighting: Medium", "Plausibility: Implausible"],
+        models: "GPT-5 (LR): A, Gemini 2.5 Pro (MR): J, Qwen3-VL 8B Instruct: J"
+      },
+      {
+        id: "blue-chair",
+        title: "Blue-room chair example",
+        scene: "Misc indoor scene",
+        description:
+          "A lower-depth inconsistency that all three highlighted models solve correctly. Even here, the geometry cue is more subtle than a simple visual artifact.",
+        imageA: "./images/A_ai_008_002__obj18__B00_0064__A00_0068__C00_0000__mode-fit_bbox.jpg",
+        imageB: "./images/B_ai_008_002__obj18__B00_0064__A00_0068__C00_0000__mode-fit_bbox.jpg",
+        answer: "F",
+        tags: ["Object: Chair", "Depth: Low", "Lighting: Medium", "Plausibility: Implausible"],
+        models: "GPT-5 (LR): F, Gemini 2.5 Pro (MR): F, Qwen3-VL 8B Instruct: F"
+      },
+      {
+        id: "kitchen-window",
+        title: "Kitchen window example",
+        scene: "Kitchen scene",
+        description:
+          "A more plausible-looking inconsistency. The correct answer is J, and the models disagree with E / Q / J.",
+        imageA: "./images/buckets/lighting/A_ai_027_003__obj1__B06_0091__A06_0090__C04_0072__mode-fit_bbox.jpg",
+        imageB: "./images/buckets/lighting/B_ai_027_003__obj1__B06_0091__A06_0090__C04_0072__mode-fit_bbox.jpg",
+        answer: "J",
+        tags: ["Object: Window", "Depth: High", "Lighting: Medium", "Plausibility: Plausible"],
+        models: "GPT-5 (LR): E, Gemini 2.5 Pro (MR): Q, Qwen3-VL 8B Instruct: J"
+      }
+    ];
+
+    const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    const state = {
+      index: 0,
+      selected: "",
+      revealed: false,
+      correct: 0,
+      completed: 0
+    };
+
+    const titleEl = document.getElementById("example-title");
+    const progressEl = document.getElementById("progress-pill");
+    const imageAEl = document.getElementById("image-a");
+    const imageBEl = document.getElementById("image-b");
+    const letterGridEl = document.getElementById("letter-grid");
+    const submitButtonEl = document.getElementById("submit-button");
+    const resetButtonEl = document.getElementById("reset-button");
+    const feedbackEl = document.getElementById("feedback-box");
+    const scoreCorrectEl = document.getElementById("score-correct");
+    const scoreTotalEl = document.getElementById("score-total");
+    const metaSceneEl = document.getElementById("meta-scene");
+    const metaTagsEl = document.getElementById("meta-tags");
+    const metaDescriptionEl = document.getElementById("meta-description");
+    const revealAnswerEl = document.getElementById("reveal-answer");
+    const revealModelsEl = document.getElementById("reveal-models");
+
+    function currentExample() {
+      return EXAMPLES[state.index];
+    }
+
+    function createLetterButtons() {
+      LETTERS.forEach((letter) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "letter-button";
+        button.textContent = letter;
+        button.setAttribute("data-letter", letter);
+        button.addEventListener("click", () => {
+          if (state.revealed) {
+            return;
+          }
+          state.selected = letter;
+          renderLetterSelection();
+          feedbackEl.textContent = "Selection locked in. Press Check answer when ready.";
+          feedbackEl.className = "feedback-box feedback-neutral";
+        });
+        letterGridEl.appendChild(button);
+      });
+    }
+
+    function renderLetterSelection() {
+      const buttons = letterGridEl.querySelectorAll(".letter-button");
+      buttons.forEach((button) => {
+        const letter = button.getAttribute("data-letter");
+        const isSelected = letter === state.selected;
+        button.classList.toggle("is-selected", isSelected);
+        button.disabled = state.revealed;
+      });
+    }
+
+    function renderMeta(example) {
+      metaSceneEl.textContent = example.scene;
+      metaDescriptionEl.textContent = example.description;
+      metaTagsEl.innerHTML = "";
+      example.tags.forEach((tag) => {
+        const tagEl = document.createElement("span");
+        tagEl.className = "tag";
+        tagEl.textContent = tag;
+        metaTagsEl.appendChild(tagEl);
+      });
+      revealAnswerEl.textContent = "Answer: -";
+      revealModelsEl.textContent = "Model guesses will appear here.";
+    }
+
+    function renderExample() {
+      const example = currentExample();
+      titleEl.textContent = example.title;
+      progressEl.textContent = `Example ${state.index + 1} of ${EXAMPLES.length}`;
+      imageAEl.src = example.imageA;
+      imageBEl.src = example.imageB;
+      imageAEl.alt = `${example.title} frame A`;
+      imageBEl.alt = `${example.title} frame B`;
+      state.selected = "";
+      state.revealed = false;
+      submitButtonEl.textContent = "Check answer";
+      feedbackEl.textContent = "Choose a letter before revealing the answer.";
+      feedbackEl.className = "feedback-box feedback-neutral";
+      renderMeta(example);
+      renderLetterSelection();
+      updateScore();
+    }
+
+    function updateScore() {
+      scoreCorrectEl.textContent = String(state.correct);
+      scoreTotalEl.textContent = String(state.completed);
+    }
+
+    function revealAnswer() {
+      const example = currentExample();
+      const isCorrect = state.selected === example.answer;
+      state.completed += 1;
+      if (isCorrect) {
+        state.correct += 1;
+        feedbackEl.textContent = `Correct. ${example.answer} is the inconsistent object.`;
+        feedbackEl.className = "feedback-box feedback-correct";
+      } else {
+        feedbackEl.textContent = `Not quite. You chose ${state.selected}, but the correct answer is ${example.answer}.`;
+        feedbackEl.className = "feedback-box feedback-incorrect";
+      }
+      revealAnswerEl.textContent = `Answer: ${example.answer}`;
+      revealModelsEl.textContent = example.models;
+      state.revealed = true;
+      submitButtonEl.textContent = state.index === EXAMPLES.length - 1 ? "See final score" : "Next example";
+      renderLetterSelection();
+      updateScore();
+    }
+
+    function advanceExample() {
+      if (state.index < EXAMPLES.length - 1) {
+        state.index += 1;
+        renderExample();
+        return;
+      }
+
+      const summary = `You got ${state.correct} out of ${EXAMPLES.length} correct.`;
+      feedbackEl.textContent = `${summary} Humans remain much stronger than today's models on the full benchmark.`;
+      feedbackEl.className = "feedback-box feedback-neutral";
+      submitButtonEl.disabled = true;
+      resetButtonEl.disabled = true;
+      revealAnswerEl.textContent = `Final score: ${state.correct}/${EXAMPLES.length}`;
+      revealModelsEl.textContent = "Use the project page to explore the benchmark-wide results and paper figures.";
+    }
+
+    function handleSubmit() {
+      if (!state.revealed) {
+        if (!state.selected) {
+          feedbackEl.textContent = "Pick a letter before checking your answer.";
+          feedbackEl.className = "feedback-box feedback-incorrect";
+          return;
+        }
+        revealAnswer();
+        return;
+      }
+      advanceExample();
+    }
+
+    function handleReset() {
+      if (state.revealed) {
+        return;
+      }
+      state.selected = "";
+      feedbackEl.textContent = "Choice cleared.";
+      feedbackEl.className = "feedback-box feedback-neutral";
+      renderLetterSelection();
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (submitButtonEl.disabled) {
+        return;
+      }
+      const key = event.key.toUpperCase();
+      if (!state.revealed && LETTERS.includes(key)) {
+        state.selected = key;
+        renderLetterSelection();
+        feedbackEl.textContent = `Selected ${key}. Press Enter to submit.`;
+        feedbackEl.className = "feedback-box feedback-neutral";
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSubmit();
+      }
+    });
+
+    submitButtonEl.addEventListener("click", handleSubmit);
+    resetButtonEl.addEventListener("click", handleReset);
+
+    createLetterButtons();
+    renderExample();
+  </script>
+</body>
+</html>

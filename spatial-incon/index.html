@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="Project page for Multimodal Large Language Models Cannot Spot Spatial Inconsistencies."
+  >
+  <meta
+    name="keywords"
+    content="multimodal large language models, 3D reasoning, multiview geometry, spatial inconsistency, benchmark"
+  >
+  <title>Multimodal Large Language Models Cannot Spot Spatial Inconsistencies</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./css/index.css">
+</head>
+<body class="project-page">
+  <div class="background-orb orb-one"></div>
+  <div class="background-orb orb-two"></div>
+
+  <main class="page-frame">
+    <header class="hero-panel panel">
+      <nav class="topbar topbar-minimal">
+        <div class="topbar-links">
+          <a href="#method">Method</a>
+          <a href="#examples">Examples</a>
+          <a href="#results">Results</a>
+        </div>
+      </nav>
+
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1>Multimodal Large Language Models Cannot Spot Spatial Inconsistencies</h1>
+          <p class="hero-lead">
+            We study whether multimodal models can detect when two views of the same static scene
+            are geometrically inconsistent. While humans can easily spot the augmented object, SOTA multimodal LLMs often can't.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button-link button-link-solid" href="#">arXiv</a>
+            <a class="button-link button-link-ghost" href="#">GitHub</a>
+            <a class="button-link button-link-ghost" href="#method">Method</a>
+            <a class="button-link button-link-ghost" href="#results">Results</a>
+          </div>
+
+          <div class="authors-block">
+            <p class="authors-line">
+              <a href="https://reachomk.github.io/" target="_blank" rel="noopener noreferrer">Om Khangaonkar</a>
+              <span class="author-sep">|</span>
+              <a href="https://sites.google.com/view/jamalirad/home" target="_blank" rel="noopener noreferrer">Hadi J. Rad</a>
+              <span class="author-sep">|</span>
+              <a href="https://web.cs.ucdavis.edu/~hpirsiav/" target="_blank" rel="noopener noreferrer">Hamed Pirsiavash</a>
+            </p>
+            <p class="affiliations-line">UC Davis and Shell</p>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <figure class="hero-figure">
+            <img
+              src="./images/mainpair.png"
+              alt="Teaser pair showing two views of a scene, with one object spatially inconsistent."
+            >
+          </figure>
+          <div class="hero-annotation card-float answer-panel hero-answer-panel">
+            <h2>Which labeled object is spatially inconsistent?</h2>
+            <p>
+              The two images depict the same static scene, except that one object in the second
+              frame was copied from a different camera pose. The local appearance remains
+              realistic, but the cross-view geometry is no longer consistent.
+            </p>
+            <p class="answer-title">Select the inconsistent object's letter</p>
+            <div class="letter-grid hero-letter-grid" id="hero-letter-grid" aria-label="Hero letter choices"></div>
+            <div class="demo-actions hero-demo-actions">
+              <button class="action-button primary" id="hero-submit-button" type="button">Check answer</button>
+              <button class="action-button secondary" id="hero-reset-button" type="button">Reset</button>
+            </div>
+            <div class="feedback-box feedback-neutral" id="hero-feedback-box" aria-live="polite">
+              Choose a letter before revealing the answer.
+            </div>
+            <p class="hero-model-note" id="hero-model-note">
+              After you answer, we'll show how a few models responded.
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="section-block" id="method">
+      <div class="section-heading">
+        <h2>Spatial inconsistencies from multi-view scenes</h2>
+        <p class="section-side-note">
+          We construct controlled spatial inconsistencies using a simple, scalable, cut and paste strategy:
+          remove an object from one real view, then paste the same object from a different real
+          camera pose back into the scene.
+        </p>
+      </div>
+
+      <div class="method-layout">
+        <figure class="panel figure-panel">
+          <img
+            src="./images/web/Cut and Paste Inconsistency.png"
+            alt="Figure showing the cut-and-paste pipeline for synthesizing spatial inconsistencies."
+            loading="lazy"
+          >
+          <figcaption>
+            We convert the views <span class="inline-code">V1</span>, <span class="inline-code">V2</span>, and
+            <span class="inline-code">V3</span> into a spatial inconsistency by: (1) selecting an object visible
+            in all three views, (2) removing that object from <span class="inline-code">V2</span> and inpainting
+            the background, (3) pasting the same object from <span class="inline-code">V3</span> back into the
+            original location in <span class="inline-code">V2</span>. We label objects in
+            <span class="inline-code">V1</span> for forced-choice evaluation.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section-block" id="examples">
+      <div class="section-heading">
+        <h2>Example spatial inconsistencies</h2>
+        <p class="section-side-note">
+          We showcase some example spatial inconsistencies with their scene attributes. </p>
+      </div>
+
+      <div class="example-grid single-stack">
+        <article class="panel example-card">
+          <div class="example-pair">
+            <figure>
+              <img
+                src="./images/A_ai_044_010__obj51__B01_0093__A01_0052__C01_0051__mode-fit_bbox.jpg"
+                alt="Labeled lounge scene."
+                loading="lazy"
+              >
+              <figcaption>Frame A</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./images/B_ai_044_010__obj51__B01_0093__A01_0052__C01_0051__mode-fit_bbox.jpg"
+                alt="Edited lounge scene."
+                loading="lazy"
+              >
+              <figcaption>Frame B</figcaption>
+            </figure>
+          </div>
+          <div class="example-copy">
+            <div class="tag-row">
+              <span class="tag">Depth: Med</span>
+              <span class="tag">Light: High</span>
+              <span class="tag">Physically Implausible</span>
+              <span class="tag"># Labels: 5</span>
+              <span class="tag">Scene: Lounge</span>
+              <span class="tag">Object: Chair</span>
+              <span class="tag tag-accent">Answer: D</span>
+            </div>
+            <div class="tag-row">
+              <span class="tag">GPT-5 (LR): C</span>
+              <span class="tag">Gemini 2.5 Pro (MR): D</span>
+              <span class="tag">Qwen3-VL 8B Instruct: B</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel example-card">
+          <div class="example-pair">
+            <figure>
+              <img
+                src="./images/buckets/wacky/A.jpg"
+                alt="Labeled bathroom scene."
+                loading="lazy"
+              >
+              <figcaption>Frame A</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./images/buckets/wacky/B.jpg"
+                alt="Edited bathroom scene."
+                loading="lazy"
+              >
+              <figcaption>Frame B</figcaption>
+            </figure>
+          </div>
+          <div class="example-copy">
+            <div class="tag-row">
+              <span class="tag">Depth: Med</span>
+              <span class="tag">Light: Med</span>
+              <span class="tag">Physically Implausible</span>
+              <span class="tag"># Labels: 10</span>
+              <span class="tag">Scene: Bathroom</span>
+              <span class="tag">Object: Mirror</span>
+              <span class="tag tag-accent">Answer: B</span>
+            </div>
+            <div class="tag-row">
+              <span class="tag">GPT-5 (LR): A</span>
+              <span class="tag">Gemini 2.5 Pro (MR): J</span>
+              <span class="tag">Qwen3-VL 8B Instruct: J</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel example-card">
+          <div class="example-pair">
+            <figure>
+              <img
+                src="./images/A_ai_008_002__obj18__B00_0064__A00_0068__C00_0000__mode-fit_bbox.jpg"
+                alt="Labeled room with chairs."
+                loading="lazy"
+              >
+              <figcaption>Frame A</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./images/B_ai_008_002__obj18__B00_0064__A00_0068__C00_0000__mode-fit_bbox.jpg"
+                alt="Edited room with chairs."
+                loading="lazy"
+              >
+              <figcaption>Frame B</figcaption>
+            </figure>
+          </div>
+          <div class="example-copy">
+            <div class="tag-row">
+              <span class="tag">Depth: Low</span>
+              <span class="tag">Light: Med</span>
+              <span class="tag">Physically Implausible</span>
+              <span class="tag"># Labels: 9</span>
+              <span class="tag">Scene: Misc</span>
+              <span class="tag">Object: Chair</span>
+              <span class="tag tag-accent">Answer: F</span>
+            </div>
+            <div class="tag-row">
+              <span class="tag">GPT-5 (LR): F</span>
+              <span class="tag">Gemini 2.5 Pro (MR): F</span>
+              <span class="tag">Qwen3-VL 8B Instruct: F</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel example-card">
+          <div class="example-pair">
+            <figure>
+              <img
+                src="./images/buckets/lighting/A_ai_027_003__obj1__B06_0091__A06_0090__C04_0072__mode-fit_bbox.jpg"
+                alt="Labeled kitchen scene with window."
+                loading="lazy"
+              >
+              <figcaption>Frame A</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./images/buckets/lighting/B_ai_027_003__obj1__B06_0091__A06_0090__C04_0072__mode-fit_bbox.jpg"
+                alt="Edited kitchen scene with window."
+                loading="lazy"
+              >
+              <figcaption>Frame B</figcaption>
+            </figure>
+          </div>
+          <div class="example-copy">
+            <div class="tag-row">
+              <span class="tag">Depth: High</span>
+              <span class="tag">Light: Med</span>
+              <span class="tag">Physically Plausible</span>
+              <span class="tag"># Labels: 18</span>
+              <span class="tag">Scene: Kitchen</span>
+              <span class="tag">Object: Window</span>
+              <span class="tag tag-accent">Answer: J</span>
+            </div>
+            <div class="tag-row">
+              <span class="tag">GPT-5 (LR): E</span>
+              <span class="tag">Gemini 2.5 Pro (MR): Q</span>
+              <span class="tag">Qwen3-VL 8B Instruct: J</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block" id="results">
+      <div class="section-heading">
+        <h2>Benchmark results</h2>
+        <p class="section-side-note">
+          Humans consistently outperform models on every aspect of the benchmark. 
+          Furthermore, while human accuracy is robust across various attributes, model accuracy varies markedly.
+        </p>
+      </div>
+
+      <article class="panel paper-table-panel">
+        <div class="table-wrap">
+          <table class="paper-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Overall</th>
+                <th>Model</th>
+                <th>Overall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Gemma 3 12B</td><td>8.5</td><td class="table-emphasis-top">Random Chance</td><td class="table-emphasis-top">7.9</td></tr>
+              <tr><td>Idefics3 8B</td><td>8.9</td><td class="table-emphasis-bottom">Human</td><td class="table-emphasis-bottom">84.8</td></tr>
+              <tr><td>Idefics2 8B</td><td>11.9</td><td>GPT-5 Nano</td><td>15.3</td></tr>
+              <tr><td>Qwen2.5-VL 7B</td><td>15.9</td><td>Gemini 2.5 Flash</td><td>17.6</td></tr>
+              <tr><td>InternVL 3.5 8B</td><td>16.1</td><td>GPT-4o</td><td>19.0</td></tr>
+              <tr><td>LLaVA OneVision 1.5 8B</td><td>16.6</td><td>Gemini 2.5 Pro (HR)</td><td>28.9</td></tr>
+              <tr><td>SpaceQwen2.5-VL 3B</td><td>18.2</td><td>Gemini 2.5 Pro (LR)</td><td>29.4</td></tr>
+              <tr><td>Llama 3.2 Multimodal 11B</td><td>23.4</td><td>Gemini 2.5 Pro (MR)</td><td>29.4</td></tr>
+              <tr><td>Qwen3-VL 4B</td><td>24.7</td><td>GPT-5 (HR)</td><td>30.2</td></tr>
+              <tr><td>Qwen3-VL 8B Thinking</td><td>25.2</td><td>GPT-5 (MR)</td><td>31.4</td></tr>
+              <tr><td>Qwen3-VL 8B Instruct</td><td>27.6</td><td>GPT-5 (LR)</td><td>34.2</td></tr>
+              <tr><td class="table-emphasis-top">Ensemble (open source)</td><td class="table-emphasis-top">30.1</td><td class="table-emphasis-top">Ensemble (all models)</td><td class="table-emphasis-top">35.0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-caption">
+          Overall accuracy (%) on the spatial inconsistency identification task. Humans
+          substantially outperform all tested multimodal models.
+        </p>
+      </article>
+
+      <figure class="panel figure-panel full-figure">
+        <img
+          src="./images/web/depth_lighting_plausibility_acc.png"
+          alt="Accuracy by depth, scene lighting, and physical plausibility."
+          loading="lazy"
+        >
+        <figcaption>
+          Model accuracy varies greatly across scene attributes: depth, lighting, and physical
+          plausibility all matter.
+        </figcaption>
+      </figure>
+
+      <figure class="panel figure-panel full-figure">
+        <img
+          src="./images/web/class_acc.png"
+          alt="Accuracy by inconsistent object class."
+          loading="lazy"
+        >
+        <figcaption>
+          Accuracy varies greatly across the augmented object’s class, revealing brittle 3D
+          understanding across common object types.
+        </figcaption>
+      </figure>
+
+      <figure class="panel figure-panel full-figure">
+        <img
+          src="./images/web/scene_category_acc.png"
+          alt="Accuracy by scene type."
+          loading="lazy"
+        >
+        <figcaption>
+          Model accuracy also changes substantially across scene types.
+        </figcaption>
+      </figure>
+
+      <figure class="panel figure-panel full-figure">
+        <img
+          src="./images/web/accuracy_by_num_labels.png"
+          alt="Accuracy by number of labels per pair."
+          loading="lazy"
+        >
+        <figcaption>
+          The number of candidate labels per pair has only a modest effect compared to the
+          underlying perceptual challenge.
+        </figcaption>
+      </figure>
+
+      <figure class="panel figure-panel full-figure">
+        <img
+          src="./images/web/pairwise_overlap_combined_heatmaps_triangles.png"
+          alt="Pairwise overlap of incorrect questions and wrong answers across models."
+          loading="lazy"
+        >
+        <figcaption>
+          Models often fail on similar questions, but they rarely agree on the same wrong answer.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="section-block" id="citation">
+      <div class="section-heading">
+        <h2>BibTeX</h2>
+      </div>
+
+      <div class="panel citation-panel">
+        <pre class="citation-block">TODO</pre>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const HERO_EXAMPLE = {
+      answer: "E",
+      letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+      models: "GPT-5 guessed C, Gemini 2.5 Pro guessed B, and Qwen3 VL 8B guessed D."
+    };
+
+    const heroState = {
+      selected: "",
+      revealed: false
+    };
+
+    const heroLetterGridEl = document.getElementById("hero-letter-grid");
+    const heroSubmitButtonEl = document.getElementById("hero-submit-button");
+    const heroResetButtonEl = document.getElementById("hero-reset-button");
+    const heroFeedbackEl = document.getElementById("hero-feedback-box");
+    const heroModelNoteEl = document.getElementById("hero-model-note");
+
+    function renderHeroSelection() {
+      const buttons = heroLetterGridEl.querySelectorAll(".letter-button");
+      buttons.forEach((button) => {
+        const letter = button.getAttribute("data-letter");
+        button.classList.toggle("is-selected", letter === heroState.selected);
+        button.classList.toggle("is-correct", heroState.revealed && letter === HERO_EXAMPLE.answer);
+        button.classList.toggle(
+          "is-incorrect",
+          heroState.revealed && letter === heroState.selected && heroState.selected !== HERO_EXAMPLE.answer
+        );
+        button.disabled = heroState.revealed;
+      });
+    }
+
+    function resetHeroChallenge() {
+      heroState.selected = "";
+      heroState.revealed = false;
+      heroSubmitButtonEl.disabled = false;
+      heroFeedbackEl.textContent = "Choose a letter before revealing the answer.";
+      heroFeedbackEl.className = "feedback-box feedback-neutral";
+      heroModelNoteEl.textContent = "After you answer, we'll show how a few models responded.";
+      renderHeroSelection();
+    }
+
+    function createHeroLetterButtons() {
+      HERO_EXAMPLE.letters.forEach((letter) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "letter-button";
+        button.textContent = letter;
+        button.setAttribute("data-letter", letter);
+        button.addEventListener("click", () => {
+          if (heroState.revealed) {
+            return;
+          }
+          heroState.selected = letter;
+          heroFeedbackEl.textContent = "Selection locked in. Press Check answer when ready.";
+          heroFeedbackEl.className = "feedback-box feedback-neutral";
+          renderHeroSelection();
+        });
+        heroLetterGridEl.appendChild(button);
+      });
+    }
+
+    function handleHeroSubmit() {
+      if (heroState.revealed) {
+        return;
+      }
+
+      if (!heroState.selected) {
+        heroFeedbackEl.textContent = "Pick a letter before checking your answer.";
+        heroFeedbackEl.className = "feedback-box feedback-incorrect";
+        return;
+      }
+
+      heroState.revealed = true;
+      heroSubmitButtonEl.disabled = true;
+      if (heroState.selected === HERO_EXAMPLE.answer) {
+        heroFeedbackEl.textContent = "Correct. E is the inconsistent object.";
+        heroFeedbackEl.className = "feedback-box feedback-correct";
+      } else {
+        heroFeedbackEl.textContent = `Not quite. You chose ${heroState.selected}, but the correct answer is E.`;
+        heroFeedbackEl.className = "feedback-box feedback-incorrect";
+      }
+      heroModelNoteEl.textContent = HERO_EXAMPLE.models;
+      renderHeroSelection();
+    }
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key.toUpperCase();
+      if (!heroState.revealed && HERO_EXAMPLE.letters.includes(key)) {
+        heroState.selected = key;
+        heroFeedbackEl.textContent = `Selected ${key}. Press Enter to submit.`;
+        heroFeedbackEl.className = "feedback-box feedback-neutral";
+        renderHeroSelection();
+      }
+
+      if (event.key === "Enter" && !heroSubmitButtonEl.disabled) {
+        event.preventDefault();
+        handleHeroSubmit();
+      }
+    });
+
+    heroSubmitButtonEl.addEventListener("click", handleHeroSubmit);
+    heroResetButtonEl.addEventListener("click", resetHeroChallenge);
+
+    createHeroLetterButtons();
+    resetHeroChallenge();
+  </script>
+</body>
+</html>
