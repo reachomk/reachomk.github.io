@@ -204,10 +204,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible {
   scroll-margin-top: 1rem;
 }
 
-.is-light-section {
-  background: #f5f5f5;
-}
-
 .research-figure {
   margin: 1.5rem 0 0;
 }
@@ -311,6 +307,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible {
 }
 
 .footer {
+  background: white;
   padding: 2rem 1.5rem;
   font-size: 0.875rem;
   line-height: 1.8;
