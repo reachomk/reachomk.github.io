@@ -45,7 +45,7 @@ recordings in the RoboCasa repository's flow-rollout environment;
 These source tools require that repository's datasets, checkpoints, and simulator
 assets. Neither runs the action policy during export.
 
-The arXiv, Code, Data, and Models links remain marked “soon” until final URLs are
+The arXiv, Code, and Models links remain marked “soon” until final URLs are
 available. Update the BibTeX entry when publication details are confirmed.
 Typography is inspired by JtT, and the narrative organization by Cues.
 The Latin Modern font attribution and license are in `assets/fonts/`.
