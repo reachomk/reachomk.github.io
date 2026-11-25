@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="WhereMoves learns where future motion will occur before predicting how it will unfold, jointly localizing pixels representing distinct motion and grouping pixels with redundant motion.">
+  <meta name="theme-color" content="#ffffff">
+  <title>WhereMoves: Anticipating Where Motion Will Occur</title>
+  <link rel="stylesheet" href="style.css?v=20261124-query-steps">
+  <script type="module" src="app.js?v=20261124-query-steps"></script>
+</head>
+<body>
+  <a class="skip-link" href="#idea">Skip to article</a>
+  <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle contents" aria-controls="contents" aria-expanded="false">
+    <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>
+  </button>
+  <nav id="contents" aria-label="Contents" aria-hidden="true" inert>
+    <p class="toc-title">Contents</p>
+    <ul>
+      <li><a href="#idea"><span class="toc-number" aria-hidden="true">1</span><span>Motivation</span></a></li>
+      <li>
+        <a href="#method"><span class="toc-number" aria-hidden="true">2</span><span>Method</span></a>
+        <ul class="toc-subheadings">
+          <li><a href="#localization">Learning where distinct motion occurs</a></li>
+          <li><a href="#training">Future motion provides the supervision</a></li>
+          <li><a href="#motion-reuse">Motion groups let us reuse predictions</a></li>
+        </ul>
+      </li>
+      <li><a href="#results"><span class="toc-number" aria-hidden="true">3</span><span>Results</span></a></li>
+      <li><a href="#bibtex"><span class="toc-number" aria-hidden="true">4</span><span>BibTeX</span></a></li>
+    </ul>
+  </nav>
+  <main>
+    <header class="paper-header">
+      <h1><span class="project-name">WhereMoves:</span> Informative and Efficient Point Trajectory WAMs by Anticipating <em>Where</em> Motion Will Occur</h1>
+      <p class="authors"><a href="https://reachomk.github.io/">Om Khangaonkar</a><sup>1</sup>, Ahmadreza Moradipari<sup>2</sup>, Kyungtae Han<sup>2</sup>,<br class="desktop-break"> Shatadal Mishra<sup>2</sup>, <a href="https://skolouri.github.io/">Soheil Kolouri</a><sup>3</sup>, <a href="https://web.cs.ucdavis.edu/~hpirsiav/">Hamed Pirsiavash</a><sup>1</sup></p>
+      <p class="affiliations"><span><sup>1</sup>University of California, Davis</span> <span><sup>2</sup>Toyota Motor Corporation</span> <span><sup>3</sup>Vanderbilt University</span></p>
+      <div class="paper-links">
+        <a class="pill coming-soon" role="link" aria-disabled="true" aria-label="arXiv coming soon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6 M8 13h8 M8 17h5"/></svg>
+          arXiv <span class="soon" aria-hidden="true">soon</span>
+        </a>
+        <a class="pill coming-soon" role="link" aria-disabled="true" aria-label="Code coming soon">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.18 1.83 1.18 3.08 0 4.41-2.68 5.38-5.24 5.67.41.35.78 1.05.78 2.12v3.14c0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/></svg>
+          Code <span class="soon" aria-hidden="true">soon</span>
+        </a>
+        <a class="pill coming-soon" role="link" aria-disabled="true" aria-label="Data coming soon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5 M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+          Data <span class="soon" aria-hidden="true">soon</span>
+        </a>
+        <a class="pill coming-soon" role="link" aria-disabled="true" aria-label="Models coming soon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
+          Models <span class="soon" aria-hidden="true">soon</span>
+        </a>
+      </div>
+    </header>
+
+    <div class="story-overview" aria-label="WhereMoves overview">
+      <figure class="paper-figure hero-figure" data-vector="overview">
+        <div class="vector-content" aria-label="Overview: WhereMoves selects four representative points, predicts their trajectories, and expands their motion to 256 points for the robot policy."></div>
+      </figure>
+      <p class="story-summary"><strong>TL;DR:</strong> WhereMoves learns where future motion will occur before predicting how it will unfold. We select representative pixels and group pixels with similar motion, then generate a few trajectories and propagate their displacements within each group. This improves both the WAM's efficiency and the downstream success rates.</p>
+    </div>
+
+    <section id="idea" aria-labelledby="idea-title">
+      <!-- Paper: Introduction and Figure 2. Short connective sentences establish the pipeline and motivate the two prediction tasks. -->
+      <h2 id="idea-title">Motivation</h2>
+      <p>World-action models (WAMs) are only useful for robots if they anticipate informative changes in the scene. Many world models do this by generating future video frames. Forecasting future motion as point trajectories is emerging as a promising alternative to video prediction, as it provides correspondences for free and does not require generating appearance.</p>
+      <p>These models select points, anticipate their future motion, and condition a robot policy on the predicted trajectories. However, we observe that the usefulness of these anticipated trajectories depends not only on how accurately the points move, but also on <strong>which points we choose to anticipate</strong>.</p>
+      <p>Existing approaches typically select points heuristically (i.e. grid selection, feature clustering). However, there are two main problems with this. First, heuristic selection disregards where the scene is likely to move, so it can miss moving objects and select static or irrelevant pixels, hurting the performance of the downstream policy. Second, it does not account for which parts have similar motion, so it predicts redundant trajectories, increasing point trajectory generation compute linearly (at best) with the number of points.</p>
+      <figure class="paper-figure" id="selection" data-vector="point-selection">
+        <div class="vector-content" aria-label="Two scenes comparing random, grid, DINOv2, DINOv3, and WhereMoves point selection. WhereMoves focuses on the robot and the object it is reaching for."></div>
+      </figure>
+      <p>We argue that point trajectory WAMs should instead <strong>learn</strong> which points to select, based on where future motion will occur. This enables WhereMoves to predict which object the robot is reaching for from visual context alone. For example, our model places points on only the drill and the robot arm based on the robot’s pose. In contrast, heuristic selection tends to miss moving objects and anticipates (mostly static) motion for irrelevant objects.</p>
+    </section>
+
+    <section id="method" aria-labelledby="method-title">
+      <h2 id="method-title">Method</h2>
+      <p>Our core insight is that we should predict <strong>which pixels will move together, and which set of points will best represent that motion</strong> before generating the future motion itself.</p>
+      <figure class="paper-figure" data-vector="method">
+        <div class="vector-content" aria-label="Training: future trajectories provide representative points and motion groups. A single model learns point locations and features that group pixels with similar motion."></div>
+      </figure>
+
+      <section class="method-step" id="localization" aria-labelledby="localization-title">
+        <!-- Paper: Introduction, Abstract, and Sections 3 / 3.3. -->
+        <h3 id="localization-title">Learning where distinct motion occurs</h3>
+        <p>We formulate this as jointly <strong>localizing pixels representing distinct and informative future motions</strong> and <strong>grouping pixels with redundant future motion</strong>. Our model takes the first frame and <var>K</var> as input and jointly predicts <var>K</var> representative pixels and a per-pixel motion-group assignment.</p>
+        <p>We predict <var>K</var> + 1 motion groups, where the additional motion group represents “background” pixels with static or irrelevant motion. We then forecast motion for only the <var>K</var> representative pixels.</p>
+      </section>
+
+      <section class="method-step" id="training" aria-labelledby="training-title">
+        <!-- Paper: Introduction, Figure 3, and Sections 3.2 / 3.3. Training explains how representative points and motion groups are learned. -->
+        <h3 id="training-title">Future motion provides the supervision</h3>
+        <p>How can the model learn these points and groups from a single image? To train our model, we leverage future motion as supervision for selecting and grouping pixels in the present.</p>
+        <p>First, we filter out static or uninformative trajectories (corresponding to our additional motion group). Then, for a given <var>K</var>, we cluster the remaining trajectories into <var>K</var> groups by their displacement over time. Each cluster provides us with a representative pixel (its center’s pixel location) and the motion group (the pixel locations of other trajectories in the cluster, and which representative pixel they correspond to).</p>
+        <p>We take inspiration from prior work in object detection, DETR, and formulate point selection as predicting an <strong>unordered set of <var>K</var> locations</strong>. We formulate motion grouping as <strong>segmentation in a learned feature space</strong> optimized with a contrastive loss. Our model jointly attends over the image patches and representative pixel tokens to produce an unordered set of representative pixel locations, and pixel-level motion features.</p>
+        <p>We learn to accurately predict the pixel location via bipartite matching and a regression loss. In addition, we learn to accurately predict motion features via a contrastive InfoNCE loss that pulls together embeddings from the same motion group while pulling apart from other groups.</p>
+        <p>Note that our training uses future tracks for supervision, while inference uses <strong>only the current image</strong>.</p>
+        <p id="groups">Explore successful policy rollouts below. At each prediction step, the selected points appear on the left and their motion groups on the right. Matching colors connect a point to its group. Hover or tap to highlight the connection, and change the number of selected points with the slider. Rollout progress steps through the predictions, which occur every 16 actions. Changing the point count keeps the recorded rollout fixed.</p>
+        <figure class="interactive" id="group-demo" aria-label="Selected points and predicted motion groups">
+
+          <div class="interactive-heading"><div class="demo-selectors"><label>Scene <select class="robocasa-scene" aria-label="Motion groups scene"></select></label><label>Camera <select class="camera-select" aria-label="Motion groups camera"><option value="1">Right</option><option value="0">Left</option><option value="2">Wrist</option></select></label></div></div>
+          <p class="scene-caption"><strong>Action description:</strong> <span class="action-description">Turn the sink spout.</span></p>
+          <div class="panel-pair"><div><h4>Selected points <span class="k-label">4</span></h4><div class="scene-view points-view"></div></div><div><h4>Motion groups <span class="groups-label">4 + background</span></h4><div class="scene-view groups-view"></div></div></div>
+          <div class="control-block"><label for="group-k">Number of selected points <output for="group-k">4</output></label><input id="group-k" type="range" min="0" max="6" value="0" step="1" aria-valuetext="4 selected points"><div class="range-ticks"><button data-k="4">4</button><button data-k="8">8</button><button data-k="16">16</button><button data-k="32">32</button><button data-k="64">64</button><button data-k="128">128</button><button data-k="256">256</button></div></div>
+          <div class="interaction-tools"><label>Highlight <select class="group-select" aria-label="Highlight motion group"><option value="-1">All groups</option></select></label><button class="clear-highlight">Clear highlight</button></div>
+          <p class="group-status" aria-live="polite">Hover a point or motion group to see its correspondence. Click to keep it highlighted.</p>
+          <div class="control-block rollout-progress" hidden><label for="group-progress">Rollout progress <output for="group-progress"></output></label><div class="rollout-timeline"><div class="prediction-blocks" aria-hidden="true"></div><input id="group-progress" type="range" min="0" max="0" value="0" step="1" aria-describedby="prediction-blocks-help"></div><div class="range-endpoints"><span class="query-start"></span><span class="query-end"></span></div><p class="prediction-blocks-help" id="prediction-blocks-help">Each block is a prediction · every 16 steps</p><div class="query-navigation"><button class="previous-query">Previous prediction</button><button class="next-query">Next prediction</button></div></div>
+        </figure>
+      </section>
+
+      <section class="method-step" id="motion-reuse" aria-labelledby="motion-reuse-title">
+        <!-- Paper: Introduction and Section 3.3. The first sentence connects selection to motion reuse. -->
+        <h3 id="motion-reuse-title">Motion groups let us reuse predictions</h3>
+        <p>Selecting representative points also gives us a way to avoid predicting redundant motion. In some settings, we may only have the computational budget to predict <var>K</var> distinct trajectories, while a downstream task, e.g., a robot policy, requires <var>N</var> &gt; <var>K</var> point trajectories.</p>
+        <p>To upsample the representative motions to every pixel, we simply assign each pixel its corresponding representative pixel’s displacement trajectory.</p>
+        <p>Because the predicted motion groups enable us to map predicted trajectories to pixels with similar future motion, we can decouple the number of trajectories we need to generate from the number of trajectories the policy is conditioned on. For example, we can generate just four distinct trajectories and expand them to 256 policy inputs using a nearest-neighbor upsample.</p>
+        <p id="upsampling">The top slider chooses how many trajectories to generate; the bottom slider chooses how many points share those predictions. Press <strong>Play</strong> to watch them move.</p>
+        <figure class="interactive" id="upsample-demo" aria-label="Generated and expanded trajectories">
+
+          <div class="interactive-heading"><div class="demo-selectors"><label>Scene <select class="robocasa-scene" aria-label="Upsampling scene"></select></label><label>Camera <select class="camera-select" aria-label="Upsampling camera"><option value="1">Right</option><option value="0">Left</option><option value="2">Wrist</option></select></label></div></div>
+          <p class="scene-caption">Pick the hot dog from the counter and place it in the cabinet.</p><div class="panel-pair"><div><h4>Generated trajectories <span class="k-label">4</span></h4><div class="scene-view sparse-view"></div></div><div><h4>Expanded trajectories <span class="n-label">256</span></h4><div class="scene-view dense-view"></div></div></div>
+          <div class="control-block"><label for="upsample-k">Number of selected points, <var>K</var> <output for="upsample-k">4</output></label><input id="upsample-k" type="range" min="0" max="6" value="0" step="1" aria-valuetext="4 selected points"><div class="range-ticks"><button data-k="4">4</button><button data-k="8">8</button><button data-k="16">16</button><button data-k="32">32</button><button data-k="64">64</button><button data-k="128">128</button><button data-k="256">256</button></div></div>
+          <div class="control-block"><label for="upsample-n">Number of points to upsample to, <var>N</var> <output for="upsample-n">256</output></label><input id="upsample-n" type="range" min="4" max="256" step="1" value="256"><div class="range-endpoints"><span class="n-min">4</span><span>256</span></div></div>
+          <div class="playback"><button class="play-toggle" aria-label="Play predicted trajectories">Play</button><label for="time">Future frame</label><input id="time" type="range" min="0" max="32" value="32" step="1"><output for="time">32 / 32</output></div>
+          <p class="budget-summary" aria-live="polite"><strong>64×</strong> fewer generated trajectories for 256 displayed points.</p>
+        </figure>
+      </section>
+    </section>
+
+    <section id="results" aria-labelledby="results-title">
+      <!-- Paper: Section 4.2, Figure 5, and Table 4. A connecting sentence introduces the control experiment. -->
+      <h2 id="results-title">Results</h2>
+      <p>We next test whether these trajectories help the robot complete its task. Our learned trajectory selection substantially outperforms baselines in success rate, efficiency, or both. With eight generated trajectories per camera, <strong>WhereMoves achieves 54.3% success</strong>, compared with 1.2% for grid selection at the same point count.</p>
+      <p>We report success rate over 50 rollouts for each of the 24 RoboCasa tasks. We also report GFLOPs and inference time for generation and selection on an NVIDIA RTX 3090.</p>
+      <p>We plot success rates on RoboCasa as the number of generated trajectories per camera, <var>K</var>, increases. The area of the translucent disk represents the sum of generation and selection costs in GFLOPs.</p>
+      <figure class="paper-figure" id="efficiency-demo" aria-labelledby="results-title">
+        <div class="efficiency-chart" aria-label="RoboCasa task success versus generated point count. Circle area represents generation plus selection GFLOPs."></div>
+        <p class="chart-instruction">Hover a circle for compute, time, and success. Tap on touch screens.</p>
+      </figure>
+      <p>We demonstrate that generating very few trajectories (i.e. 4 or 8) and upsampling using our learned motion group embeddings performs very close to the full 256 trajectories, and still strongly outperforms baselines. This suggests on many tasks, policies may only need distinct motion from a few points to perform well.</p>
+      <p>Given the effectiveness, speed, and flexibility of our method, we hope that future world models will benefit from learning <em>where</em> distinct future motion will occur.</p>
+    </section>
+
+    <section id="bibtex" aria-labelledby="bibtex-title">
+      <div class="citation-header"><h2 id="bibtex-title">BibTeX</h2><div class="citation-controls"><span id="citation-status" role="status"></span><button type="button" id="copy-bibtex">Copy BibTeX</button></div></div>
+      <pre class="bibtex"><code id="bibtex-entry">@misc{khangaonkar_wheremoves,
+  title = {{WhereMoves}: Informative and Efficient Point Trajectory {WAMs}
+           by Anticipating Where Motion Will Occur},
+  author = {Khangaonkar, Om and Moradipari, Ahmadreza and
+            Han, Kyungtae and Mishra, Shatadal and
+            Kolouri, Soheil and Pirsiavash, Hamed}
+}</code></pre>
+    </section>
+    <footer><p>Page design inspired by <a href="https://jtt.gabrijel-boduljak.com/">JtT</a>, with a visual walkthrough inspired by <a href="https://www.sophielwang.com/cues">Cues</a>. Typography uses <a href="https://latex.vercel.app/">LaTeX.css</a>’s Latin Modern.</p></footer>
+  </main>
+
+  <noscript><p>This page’s figures require JavaScript to load.</p></noscript>
+</body>
+</html>
