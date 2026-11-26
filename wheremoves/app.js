@@ -1,5 +1,5 @@
 import { groupColor, upsample } from './motion.js?v=20261124-background';
-import { initEfficiency } from './results.js?v=20261124-clean-figures';
+import { initEfficiency } from './results.js?v=20261126-pixels';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -71,11 +71,11 @@ function sceneSvg(data, label) {
 }
 function point(svg, xy, group, k, radius = 1.35, interactive = true) {
   const p = svgNode('circle', { cx: xy[0] + .5, cy: xy[1] + .5, r: radius, fill: groupColor(group, k), stroke: '#fff', 'stroke-width': .35, 'data-group': group });
-  if (interactive) p.append(svgNode('title', {}, `Point ${group + 1} · motion group ${group + 1}`));
+  if (interactive) p.append(svgNode('title', {}, `Pixel ${group + 1} · motion group ${group + 1}`));
   svg.append(p);
 }
 function selectionSvg(data) {
-  const svg = sceneSvg(data, `${data.k} selected representative points`);
+  const svg = sceneSvg(data, `${data.k} selected representative pixels`);
   data.rawPoints.forEach((xy, group) => point(svg, xy, group, data.k, data.k > 64 ? .85 : 1.35));
   return svg;
 }
@@ -202,7 +202,7 @@ function highlight(group = -1) {
     node.style.opacity = group < 0 || g === group ? base : .1;
   });
   $('.group-status', groupRoot).textContent = group < 0
-    ? 'Hover a point or motion group to see its correspondence. Click to keep it highlighted.'
+    ? 'Hover a pixel or motion group to see its correspondence. Click to keep it highlighted.'
     : `${group === groupData.k ? 'Background' : `Motion group ${group + 1}`} · ${groupData.groupCounts[group].toLocaleString()} pixels${pinned === group ? ' · selected' : ''}`;
 }
 async function renderGroups() {
@@ -250,7 +250,7 @@ async function renderGroups() {
       block.classList.toggle('is-current', start === blockStart);
     });
     $('.load-error', groupRoot)?.remove();
-    $('#group-k').setAttribute('aria-valuetext', `${k} selected points`);
+    $('#group-k').setAttribute('aria-valuetext', `${k} selected pixels`);
     updateTicks(groupRoot, k);
     $('.previous-query', groupRoot).disabled = !queries.some(q => q < query);
     $('.next-query', groupRoot).disabled = !queries.some(q => q > query);
@@ -304,7 +304,7 @@ function renderN() {
   $('output[for=upsample-n]').textContent = n;
   const factor = n / upData.k;
   $('.budget-summary', upRoot).innerHTML = factor > 1
-    ? `<strong>${Number(factor.toFixed(2))}×</strong> fewer generated trajectories for ${n} displayed points.`
+    ? `<strong>${Number(factor.toFixed(2))}×</strong> fewer generated trajectories for ${n} displayed pixels.`
     : `<strong>${n} generated trajectories.</strong> No upsampling at this setting.`;
   renderTrajectories();
 }
@@ -319,7 +319,7 @@ async function renderUpsampling() {
     upData = data;
     $('.k-label', upRoot).textContent = k;
     $('output[for=upsample-k]').textContent = k;
-    $('#upsample-k').setAttribute('aria-valuetext', `${k} selected points`);
+    $('#upsample-k').setAttribute('aria-valuetext', `${k} selected pixels`);
     updateTicks(upRoot, k); renderN();
   } catch (error) { if (version === upVersion) showError(upRoot, error); }
 }

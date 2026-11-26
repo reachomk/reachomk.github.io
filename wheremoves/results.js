@@ -58,7 +58,7 @@ export async function initEfficiency(root, data, uniqueIds) {
       const selection = document.createElement('p');
       selection.textContent = `Selection: ${stage(row.selectionGflops)} GFLOPs · ${stage(row.selectionMs)} ms`;
       const trials = document.createElement('p');
-      trials.className = 'tooltip-trials'; trials.textContent = `${row.successes.toLocaleString()} / ${row.episodes.toLocaleString()} rollouts${row.k > 256 ? ' · 256 retained points' : ''}`;
+      trials.className = 'tooltip-trials'; trials.textContent = `${row.successes.toLocaleString()} / ${row.episodes.toLocaleString()} rollouts${row.k > 256 ? ' · 256 retained pixels' : ''}`;
       section.append(details, selection, trials); return section;
     }));
     tooltip.hidden = false;
